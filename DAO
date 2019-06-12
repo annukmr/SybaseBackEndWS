@@ -1,0 +1,111 @@
+package com.encryption.DAO;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+import javax.crypto.Cipher;
+import java.util.Base64;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import org.hamcrest.core.IsNull;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+import com.encryption.dao.KeyDetailDAOImpl;
+
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class TestKeyDetailsDAO {
+		
+	@Mock
+	KeyDetailDAOImpl keyDetail;
+	
+	private static String master_key_path;
+	@Value("${master.key.path}")
+	public void setMasterKeyPath(String value) {
+		this.master_key_path=value;
+	}
+	
+	
+	@Test
+	public void testVerifyNUpdate() throws Exception{
+		String isAvailable="success";
+		Connection conn= mock(Connection.class);
+		Statement stat = mock(Statement.class);
+		ResultSet result= mock(ResultSet.class);
+		keyDetail=new KeyDetailDAOImpl();
+		//PowerMockito.mockStatic(MetadataDBConnectionUtils.class);
+	//	when(MetadataDBConnectionUtils.getOracleConnection()).thenReturn(conn);
+		when(conn.createStatement()).thenReturn(stat);
+		when(stat.executeQuery(Mockito.anyString())).thenReturn(result);
+		when(result.isBeforeFirst()).thenReturn(true).thenReturn(false);
+	
+		assertThat(keyDetail.verifyNUpdate("21", "1"), is(isAvailable));
+		
+		
+	}
+	
+	
+	@Test
+	public void testEncryptText() throws Exception {
+	
+		keyDetail=new KeyDetailDAOImpl();
+		Cipher cipher = Cipher.getInstance("AES");
+		String content = "F50D234551234A8630BCE123B7AC8F55";	//altered/random key for testing
+		byte[] decodedKey = Base64.getDecoder().decode(content);
+		SecretKey secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+		cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+		assertThat(keyDetail.encryptText("plainText", secretKey), IsNull.notNullValue());
+		
+	}
+//
+	@Test
+	public void testDecryptText() throws Exception {
+		
+		keyDetail=new KeyDetailDAOImpl();
+		Cipher cipher = Cipher.getInstance("AES");
+		//
+		String content = "F50D518354690A8630BCE683B7AC8F55";   //real key used to test decryption
+		byte[] decodedKey = Base64.getDecoder().decode(content);
+		SecretKey secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+		cipher.init(Cipher.DECRYPT_MODE, secretKey);
+		//YyvzIKJyxHcMqSRkrtFtBw==
+		assertThat(keyDetail.decryptText(org.apache.commons.codec.binary.Base64.decodeBase64("YyvzIKJyxHcMqSRkrtFtBw=="), secretKey), IsNull.notNullValue());
+		
+	}
+//
+	@Test
+	public void testDecodeKeyFromString() throws Exception{
+		keyDetail=new KeyDetailDAOImpl();
+		assertThat(keyDetail.decodeKeyFromString("F50D234551234A8630BCE123B7AC8F55"), instanceOf(SecretKey.class));
+//random key for testing		
+	}
+
+	@Test
+	public void testReadFile() throws Exception{
+		keyDetail=new KeyDetailDAOImpl();
+		assertThat(keyDetail.readFile(master_key_path), IsNull.notNullValue());
+		
+	}
+	
+//	@Test
+//	public void testReadFileFalse() throws Exception{
+//		keyDetail=new KeyDetailDAOImpl();
+//		assertThat(keyDetail.readFile("TestFile.txt"), IsNull.nullValue());
+//		
+//	}
+
+}
