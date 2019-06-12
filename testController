@@ -1,0 +1,103 @@
+package com.encryption.controller;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import com.encryption.service.EncryptionService;
+import com.encryption.utils.ResponseUtil;
+
+import net.minidev.json.JSONObject;
+
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class TestEncryptionController {
+
+	MockMvc mvc;
+	
+	@Autowired
+	private WebApplicationContext context;
+	
+	@MockBean
+	EncryptionService encryptionService;
+	
+	@MockBean
+	ResponseUtil responseUtil;
+	
+	@InjectMocks
+	EncryptionController encController;
+ 
+	
+	@Before
+	public void setup() throws Exception{
+		MockitoAnnotations.initMocks(this);
+		mvc=MockMvcBuilders.webAppContextSetup(context).build();
+		
+	}
+	
+	
+	
+	@Test
+	public void contextLoads() throws Exception{
+		assertNotNull(encController);
+		
+		
+	}
+	
+	@Test
+	public void testGetEncryptionDetail() throws Exception{
+		
+		String response="success";
+		
+		when(encryptionService.verifyNUpdate(Mockito.anyString(), Mockito.anyString())).thenReturn(response);
+		
+		String json = "{\"system\":\"HSBC_UK\",\"project\":\"JUNIPER_DEMO\"}";
+				
+		mvc.perform(post("/submit")
+				.content(json)
+				.contentType(MediaType.APPLICATION_JSON))
+		.andExpect(status().isOk());
+		
+		assertEquals(encryptionService.verifyNUpdate("HSBC_UK","JUNIPER_DEMO"), response);
+	}
+	
+	
+	
+	@Test
+	public void testGetEncryptionDetailFail() throws Exception{
+		
+		String response="Failed";
+		
+		when(encryptionService.verifyNUpdate(Mockito.anyString(), Mockito.anyString())).thenReturn(response);
+		
+		String json = "{\"system\":\"HSBC_UK\",\"project\":\"JUNIPER_DEMO\"}";
+				
+		mvc.perform(post("/submit")
+				.content(json)
+				.contentType(MediaType.APPLICATION_JSON))
+		.andExpect(status().isOk());
+		
+		assertEquals(encryptionService.verifyNUpdate("HSBC_UK","JUNIPER_DEMO"), response);
+	}
+	
+
+}
